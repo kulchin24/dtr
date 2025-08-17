@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Down town Record - Your Vinyl Destination in Tokyo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Montserrat:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display.swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-medium: #1a1a1a;
+            --text-light: #e0e0e0;
+            --text-medium: #a0a0a0;
+            --accent-gold: #c9a47e;
+        }
+
+        body {
+            font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        [lang="ja"] h1, [lang="ja"] h2, [lang="ja"] h3, [lang="ja"] h4, [lang="ja"] h5, [lang="ja"] h6 {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Animated Aurora/Smokey Background for Hero */
+        .hero-aurora {
+            background: var(--bg-dark);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-aurora::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at center, rgba(66, 43, 100, 0.3), rgba(108, 62, 133, 0.2), transparent 60%);
+            transform-origin: center;
+            animation: rotate-aurora 25s linear infinite;
+            z-index: 0;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        @keyframes rotate-aurora {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Scroll-triggered animations */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .animate-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Staggered delay for child elements */
+        .animate-on-scroll.is-visible > * {
+            transition-delay: var(--delay, 0s);
+        }
+
+        .record-card {
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            cursor: pointer;
+        }
+        .record-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        #chat-log {
+            height: 400px;
+            overflow-y: auto;
+        }
+        /* Typing indicator */
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: var(--text-medium);
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Language Toggle Switch */
+        .lang-switch {
+            cursor: pointer;
+            background: var(--bg-medium);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 9999px;
+            padding: 4px;
+            display: flex;
+            position: relative;
+        }
+        .lang-switch-label {
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 1;
+            transition: color 0.3s ease;
+        }
+        .lang-switch .active {
+            color: #0a0a0a;
+        }
+        .lang-switch-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: var(--accent-gold);
+            border-radius: 9999px;
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .lang-switch.ja .lang-switch-slider {
+            transform: translateX(100%);
+        }
+        
+        /* Record Detail Modal */
+        #record-modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        #record-modal.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+        #modal-content {
+            transform: scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        #record-modal.is-open #modal-content {
+            transform: scale(1);
+        }
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid var(--accent-gold);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-300">
+
+    <!-- Header -->
+    <header class="bg-black/50 backdrop-blur-lg sticky top-0 z-50 border-b border-white/10">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="#">
+                <img src="unnamed.png" alt="Downtown Records Logo" class="h-12 w-auto">
+            </a>
+            <div class="flex items-center space-x-10">
+                <nav class="hidden md:flex space-x-10 text-sm font-medium tracking-wider">
+                    <a href="#about" data-key="navAbout" class="hover:text-[var(--accent-gold)] transition-colors">About</a>
+                    <a href="#featured" data-key="navFeatured" class="hover:text-[var(--accent-gold)] transition-colors">Featured</a>
+                    <a href="#ai-concierge" data-key="navAI" class="hover:text-[var(--accent-gold)] transition-colors">AI Concierge</a>
+                    <a href="#contact" data-key="navVisit" class="hover:text-[var(--accent-gold)] transition-colors">Visit</a>
+                </nav>
+                <div id="lang-toggle" class="lang-switch">
+                    <div class="lang-switch-slider"></div>
+                    <span class="lang-switch-label en active">EN</span>
+                    <span class="lang-switch-label ja">JA</span>
+                </div>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+             <a href="#about" data-key="navAboutMobile" class="block py-2 hover:text-[var(--accent-gold)]">About</a>
+             <a href="#featured" data-key="navFeaturedMobile" class="block py-2 hover:text-[var(--accent-gold)]">Featured</a>
+             <a href="#ai-concierge" data-key="navAIMobile" class="block py-2 hover:text-[var(--accent-gold)]">AI Concierge</a>
+             <a href="#contact" data-key="navVisitMobile" class="block py-2 hover:text-[var(--accent-gold)]">Visit</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-aurora text-white text-center py-32 md:py-52 px-6">
+            <div class="hero-content container mx-auto animate-on-scroll">
+                <h1 data-key="heroTitle" class="text-5xl md:text-7xl font-black tracking-tight">Sounds of the Soul.</h1>
+                <p data-key="heroSubtitle" class="mt-6 text-lg md:text-xl max-w-2xl mx-auto text-[var(--text-medium)]" style="--delay: 0.1s;">From timeless classics to modern masterpieces, your next favorite record is waiting. Discover the unparalleled warmth of vinyl in the heart of Tokyo.</p>
+                <a href="#featured" data-key="heroButton" class="mt-10 inline-block bg-[var(--accent-gold)] text-black font-bold py-3 px-10 rounded-full text-lg hover:bg-white transition-colors" style="--delay: 0.2s;">Explore the Collection</a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-24 bg-[var(--bg-medium)]">
+            <div class="container mx-auto px-6 text-center animate-on-scroll">
+                <h2 data-key="aboutTitle" class="text-4xl font-bold text-white mb-6">More Than a Store. A Sanctuary.</h2>
+                <p data-key="aboutText" class="max-w-3xl mx-auto text-[var(--text-medium)] text-lg" style="--delay: 0.1s;">
+                    Located in Koto City, Down town Record is a stylish, glassed-in haven for music lovers. We believe in the tangible magic of physical media. Relax on our couches with a cup of coffee and explore a living library of domestic and imported vinyl, meticulously curated for both seasoned collectors and new enthusiasts.
+                </p>
+            </div>
+        </section>
+
+        <!-- Featured Records Section -->
+        <section id="featured" class="py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center animate-on-scroll">
+                    <h2 data-key="featuredTitle" class="text-4xl font-bold text-white mb-12">Curator's Picks</h2>
+                </div>
+                <div id="featured-records-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 animate-on-scroll">
+                    <!-- Record cards will be injected here by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Concierge Section -->
+        <section id="ai-concierge" class="py-24 bg-[var(--bg-medium)]">
+            <div class="container mx-auto px-6 animate-on-scroll">
+                <div class="text-center">
+                    <h2 data-key="aiTitle" class="text-4xl font-bold text-white mb-4">GrooveBot Concierge</h2>
+                    <p data-key="aiSubtitle" class="max-w-3xl mx-auto text-[var(--text-medium)] mb-10" style="--delay: 0.1s;">
+                        Our AI music expert is ready to assist. Ask for recommendations, find out about genres, or just talk music.
+                    </p>
+                </div>
+                <div class="max-w-3xl mx-auto bg-black/50 rounded-lg shadow-2xl border border-white/10" style="--delay: 0.2s;">
+                    <div id="chat-log" class="p-6 space-y-4">
+                        <!-- Chat messages will appear here -->
+                    </div>
+                    <div class="p-4 bg-black/30 border-t border-white/10">
+                        <form id="chat-form" class="flex items-center gap-4">
+                            <input type="text" id="chat-input" data-key-placeholder="chatPlaceholder" class="w-full bg-white/5 text-white border-white/10 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent-gold)] focus:border-[var(--accent-gold)] transition" placeholder="Ask GrooveBot anything..." autocomplete="off">
+                            <button type="submit" id="send-button" class="bg-[var(--accent-gold)] text-black p-3 rounded-lg hover:bg-white transition-colors flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- New Arrivals Section -->
+        <section id="new-arrivals" class="py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center animate-on-scroll">
+                    <h2 data-key="newArrivalsTitle" class="text-4xl font-bold text-white mb-12">Fresh in the Crates</h2>
+                </div>
+                <div id="new-arrivals-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 animate-on-scroll">
+                    <!-- Record cards will be injected here by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-24 bg-[var(--bg-medium)]">
+            <div class="container mx-auto px-6 animate-on-scroll">
+                <div class="text-center">
+                    <h2 data-key="contactTitle" class="text-4xl font-bold text-white mb-4">Find Your Groove</h2>
+                    <p data-key="contactSubtitle" class="text-[var(--text-medium)] mb-10">We're open all week in Koto City.</p>
+                </div>
+                <div class="bg-black/50 rounded-lg shadow-lg overflow-hidden md:flex border border-white/10">
+                    <div class="md:w-1/2 p-10">
+                        <h3 data-key="hoursTitle" class="text-2xl font-bold text-white mb-6">Store Hours</h3>
+                        <ul class="text-[var(--text-light)] space-y-3">
+                            <li><span data-key="hoursMonTue" class="font-semibold text-white w-32 inline-block">Mon, Tue, Thu, Fri:</span> 1:00 PM - 8:00 PM</li>
+                            <li><span data-key="hoursSatSun" class="font-semibold text-white w-32 inline-block">Saturday, Sunday:</span> 11:30 AM - 6:30 PM</li>
+                            <li><span data-key="hoursWed" class="font-semibold text-white w-32 inline-block">Wednesday:</span> Closed</li>
+                        </ul>
+                        <h3 data-key="locationTitle" class="text-2xl font-bold text-white mt-10 mb-4">Location</h3>
+                        <p class="text-[var(--text-light)]">3-chōme-27-3 Tōyō, Koto City, Tokyo 135-0016</p>
+                        <p class="text-[var(--text-medium)] mt-4">Phone: +81 3-3645-0155</p>
+                        <p class="text-[var(--text-medium)] mt-2">Website: downtownrecords.jp</p>
+                    </div>
+                    <div class="md:w-1/2 h-80 md:h-auto">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.139943553254!2d139.817464376335!3d35.67355298019622!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x601889a9a5933333%3A0x82b321e1f329ed53!2sDown%20town%20Record!5e0!3m2!1sen!2sjp!4v1723453545125!5m2!1sen!2sjp" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black/50 border-t border-white/10">
+        <div class="container mx-auto px-6 py-8 text-center text-[var(--text-medium)]">
+            <p data-key="footerText">&copy; 2025 Down town Record. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Record Detail Modal -->
+    <div id="record-modal" class="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center p-4 z-[100] hidden">
+        <div id="modal-content" class="bg-[var(--bg-medium)] rounded-lg shadow-2xl border border-white/10 w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row overflow-hidden">
+            <img id="modal-img" src="" alt="Album Art" class="w-full md:w-1/2 h-auto object-cover aspect-square">
+            <div class="p-8 flex flex-col overflow-y-auto">
+                <h2 id="modal-title" class="text-3xl font-bold text-white"></h2>
+                <p id="modal-artist" class="text-xl text-[var(--text-medium)] mt-1"></p>
+                <div class="flex items-center space-x-4 mt-4 text-sm">
+                    <span id="modal-price" class="text-2xl font-semibold text-[var(--accent-gold)]"></span>
+                    <span id="modal-genre" class="bg-white/10 text-[var(--text-light)] px-3 py-1 rounded-full"></span>
+                    <span id="modal-format" class="bg-white/10 text-[var(--text-light)] px-3 py-1 rounded-full"></span>
+                </div>
+                <div class="w-full h-[1px] bg-white/10 my-6"></div>
+                <div id="ai-description-container" class="text-[var(--text-light)] space-y-4">
+                    <!-- AI description or loader will go here -->
+                </div>
+            </div>
+        </div>
+        <button id="modal-close-btn" class="absolute top-4 right-4 text-white text-4xl leading-none">&times;</button>
+    </div>
+
+
+    <script>
+        // --- Your Gemini API Key ---
+        const GEMINI_API_KEY = "AIzaSyAfYAPwpfZ7BrEzbGVirzJ31wKR4y-s0Ew";
+
+        // --- Translations Object ---
+        const translations = {
+            en: {
+                navAbout: "About",
+                navFeatured: "Featured",
+                navAI: "AI Concierge",
+                navVisit: "Visit",
+                navAboutMobile: "About",
+                navFeaturedMobile: "Featured",
+                navAIMobile: "AI Concierge",
+                navVisitMobile: "Visit",
+                heroTitle: "Sounds of the Soul.",
+                heroSubtitle: "From timeless classics to modern masterpieces, your next favorite record is waiting. Discover the unparalleled warmth of vinyl in the heart of Tokyo.",
+                heroButton: "Explore the Collection",
+                aboutTitle: "More Than a Store. A Sanctuary.",
+                aboutText: "Located in Koto City, Down town Record is a stylish, glassed-in haven for music lovers. We believe in the tangible magic of physical media. Relax on our couches with a cup of coffee and explore a living library of domestic and imported vinyl, meticulously curated for both seasoned collectors and new enthusiasts.",
+                featuredTitle: "Curator's Picks",
+                aiTitle: "GrooveBot Concierge",
+                aiSubtitle: "Our AI music expert is ready to assist. Ask for recommendations, find out about genres, or just talk music.",
+                chatPlaceholder: "Ask GrooveBot anything...",
+                newArrivalsTitle: "Fresh in the Crates",
+                contactTitle: "Find Your Groove",
+                contactSubtitle: "We're open all week in Koto City.",
+                hoursTitle: "Store Hours",
+                hoursMonTue: "Mon, Tue, Thu, Fri:",
+                hoursSatSun: "Saturday, Sunday:",
+                hoursWed: "Wednesday:",
+                locationTitle: "Location",
+                footerText: "© 2025 Down town Record. All Rights Reserved.",
+                chatbotGreeting: "Welcome. I'm GrooveBot, your personal record concierge. How can I help you find the perfect sound today?",
+                chatbotError: "Sorry, I'm having a bit of trouble connecting. Please try again in a moment.",
+                chatbotSystemPrompt: `You are GrooveBot, the friendly and knowledgeable AI assistant for Down town Record, a record store in Koto City, Tokyo. Your personality is cool, helpful, and passionate about music.
+                - Greet the user and answer their questions about music, artists, genres, or the store.
+                - Store details: Open Mon-Tue & Thu-Fri 1-8PM, Sat-Sun 11:30AM-6:30PM, Closed Wednesday. The address is 3-chōme-27-3 Tōyō, Koto City, Tokyo 135-0016. The phone number is +81 3-3645-0155 and the website is downtownrecords.jp. The store is CASH-ONLY. The store does not carry classical music.
+                - You have access to the price of each record. If a user asks about price, provide it to them based on the inventory list.
+                - If the user asks for recommendations, you MUST respond ONLY with a JSON object that follows this exact schema: {"recommendations": [{"artist": "string", "albumTitle": "string", "reason": "string"}]}. Recommend 2-3 albums from the inventory. The reason should be a short, cool, one-sentence explanation.
+                - For any other question or conversational turn (like greetings, or questions about store hours or location), respond with a simple, natural text sentence. DO NOT use the JSON format for these.`,
+                aiDescriptionPrompt: "You are a passionate music expert and writer. Write a short, evocative description (around 50-70 words) for the album '{album}' by '{artist}'. Talk about its sound, its impact or legacy, and the feeling it evokes. Be engaging and cool, like a trusted record store clerk.",
+                aiLoadingText: "Summoning the muses..."
+            },
+            ja: {
+                navAbout: "店舗情報",
+                navFeatured: "おすすめ",
+                navAI: "AIコンシェルジュ",
+                navVisit: "アクセス",
+                navAboutMobile: "店舗情報",
+                navFeaturedMobile: "おすすめ",
+                navAIMobile: "AIコンシェルジュ",
+                navVisitMobile: "アクセス",
+                heroTitle: "魂のサウンド。",
+                heroSubtitle: "時代を超えた名盤から現代の傑作まで、あなたのお気に入りの一枚が待っています。東京の中心で、アナログレコードの比類なき温もりを発見してください。",
+                heroButton: "コレクションを見る",
+                aboutTitle: "店を超えた、聖域。",
+                aboutText: "江東区に位置するダウンタウン・レコードは、音楽愛好家のためのスタイリッシュなガラス張りの隠れ家です。私たちは物理メディアが持つ確かな魔法を信じています。ソファでコーヒーを片手にリラックスしながら、国内外のレコードを揃えた生きた音のライブラリを探索してください。熟練のコレクターから新しいファンまで、すべての方のために丹念にキュレーションされています。",
+                featuredTitle: "キュレーターのおすすめ",
+                aiTitle: "GrooveBot コンシェルジュ",
+                aiSubtitle: "当店のAI音楽エキスパートがご案内します。おすすめを尋ねたり、ジャンルについて質問したり、気軽に音楽の話をしましょう。",
+                chatPlaceholder: "GrooveBotに何でも聞いてみよう...",
+                newArrivalsTitle: "新入荷",
+                contactTitle: "あなたのグルーヴを見つけに",
+                contactSubtitle: "江東区で毎日営業しています。",
+                hoursTitle: "営業時間",
+                hoursMonTue: "月・火・木・金:",
+                hoursSatSun: "土曜日・日曜日:",
+                hoursWed: "水曜日:",
+                locationTitle: "所在地",
+                footerText: "© 2025 Down town Record. 無断複写・転載を禁じます。",
+                chatbotGreeting: "こんにちは！私はGrooveBot、あなたの専属レコード・コンシェルジュです。今日はどんな素敵なサウンドを探すお手伝いをしましょうか？",
+                chatbotError: "申し訳ありません、接続に問題が発生しました。少し時間をおいてから再度お試しください。",
+                chatbotSystemPrompt: `あなたはGrooveBot、東京の江東区にあるレコード店「ダウンタウン・レコード」のフレンドリーで知識豊富なAIアシスタントです。あなたの性格はクールで、親切で、音楽に情熱的です。
+                - ユーザーに挨拶し、音楽、アーティスト、ジャンル、または店舗に関する質問に答えてください。
+                - 店舗情報：営業時間は月火木金 13:00-20:00、土日 11:30-18:30、水曜定休。住所は東京都江東区東陽3-27-3です。電話番号は+81 3-3645-0155、ウェブサイトはdowntownrecords.jpです。お支払いは現金のみです。クラシック音楽の取り扱いはありません。
+                - 各レコードの価格情報にアクセスできます。ユーザーが価格について尋ねた場合は、在庫リストに基づいて価格を提示してください。
+                - ユーザーがおすすめを求めた場合、必ず次のスキーマに従ったJSONオブジェクトのみで応答してください: {"recommendations": [{"artist": "string", "albumTitle": "string", "reason": "string"}]}。在庫から2〜3枚のアルバムをおすすめしてください。理由はクールで短い一文の説明にしてください。
+                - 挨拶や営業時間・場所に関する質問など、その他の会話のターンでは、自然なテキスト文で応答してください。これらの応答にはJSON形式を使用しないでください。`,
+                aiDescriptionPrompt: "あなたは情熱的な音楽専門家でありライターです。'{artist}'によるアルバム'{album}'について、短く（約100〜150字）、喚情的で魅力的な説明を書いてください。そのサウンド、影響や遺産、そしてそれが呼び起こす感情について語ってください。信頼できるレコード店の店員のように、魅力的でクールに書いてください。",
+                aiLoadingText: "音楽の女神を召喚中..."
+            }
+        };
+
+        // --- Language Switcher Logic ---
+        const langToggle = document.getElementById('lang-toggle');
+        let currentLang = localStorage.getItem('language') || 'en';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+            document.documentElement.lang = lang;
+
+            langToggle.classList.toggle('ja', lang === 'ja');
+            langToggle.querySelector('.en').classList.toggle('active', lang === 'en');
+            langToggle.querySelector('.ja').classList.toggle('active', lang === 'ja');
+
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            document.querySelectorAll('[data-key-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-key-placeholder');
+                if (translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+
+            chatLog.innerHTML = '';
+            chatHistory = [];
+            setTimeout(() => {
+                appendMessage('ai', translations[currentLang].chatbotGreeting);
+                chatHistory.push({ role: 'model', parts: [{ text: translations[currentLang].chatbotGreeting }] });
+            }, 500);
+        }
+
+        langToggle.addEventListener('click', () => {
+            const newLang = currentLang === 'en' ? 'ja' : 'en';
+            setLanguage(newLang);
+        });
+
+
+        // --- Mobile Menu Toggle ---
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // --- Scroll Animation ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(element => {
+            observer.observe(element);
+            const children = element.querySelectorAll('[style*="--delay"]');
+            children.forEach((child, index) => {
+                child.style.transitionDelay = `calc(var(--delay) + ${index * 100}ms)`;
+            });
+        });
+
+        // --- Core Application Logic ---
+        let allRecords = [];
+
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(header => header.trim());
+            const records = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length === headers.length) {
+                    const record = {};
+                    headers.forEach((header, index) => {
+                        const key = header.replace(/\s+/g, '').replace(/(\(JPY\))/g, '').replace(/^\w/, c => c.toLowerCase());
+                        record[key] = values[index].trim();
+                    });
+                    records.push(record);
+                }
+            }
+            return records;
+        }
+
+        function createRecordCard(record) {
+            const colorHash = (str) => {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                let color = '#';
+                for (let i = 0; i < 3; i++) {
+                    let value = (hash >> (i * 8)) & 0xFF;
+                    color += ('00' + value.toString(16)).substr(-2);
+                }
+                return color.substring(0, 7);
+            };
+            const bgColor = colorHash(record.albumTitle);
+            const placeholderText = `${record.artist.split(' ').map(w=>w[0]).join('')}`;
+            return `
+                <div class="record-card bg-[var(--bg-medium)] rounded-lg shadow-lg overflow-hidden flex flex-col border border-white/10"
+                    data-artist="${record.artist.replace(/"/g, '&quot;')}"
+                    data-album-title="${record.albumTitle.replace(/"/g, '&quot;')}"
+                    data-price="${record.price}"
+                    data-genre="${record.genre}"
+                    data-format="${record.format}"
+                    data-release-year="${record.releaseYear}"
+                    data-img-src="https://placehold.co/600x600/${bgColor.substring(1)}/FFFFFF?text=${placeholderText}&font=montserrat">
+                    <img src="https://placehold.co/400x400/${bgColor.substring(1)}/FFFFFF?text=${placeholderText}&font=montserrat" 
+                         alt="Album art for ${record.albumTitle} by ${record.artist}" 
+                         class="w-full h-auto object-cover aspect-square">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="font-bold text-white text-md flex-grow font-['Playfair_Display']">${record.albumTitle}</h3>
+                        <p class="text-sm text-[var(--text-medium)]">${record.artist}</p>
+                        <div class="mt-2 flex justify-between items-center">
+                            <p class="text-lg font-semibold text-[var(--accent-gold)]">${record.price}</p>
+                            <span class="text-xs bg-white/10 text-[var(--text-light)] px-2 py-1 rounded-full">${record.format}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function populateGrid(elementId, records, count) {
+            const grid = document.getElementById(elementId);
+            if (!grid) return;
+            const shuffledRecords = shuffleArray([...records]);
+            const selectedRecords = shuffledRecords.slice(0, count);
+            grid.innerHTML = selectedRecords.map(createRecordCard).join('');
+        }
+
+        // --- Gemini AI Chatbot Logic ---
+        const chatLog = document.getElementById('chat-log');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        
+        let chatHistory = [];
+
+        function appendMessage(sender, message) {
+            let messageElement;
+            if (sender === 'user') {
+                messageElement = `<div class="flex justify-end"><div class="bg-[var(--accent-gold)] text-black rounded-lg py-2 px-4 max-w-sm">${message}</div></div>`;
+            } else if (sender === 'ai') {
+                messageElement = `<div class="flex justify-start"><div class="bg-white/10 text-white rounded-lg py-2 px-4 max-w-sm">${message}</div></div>`;
+            } else if (sender === 'ai-cards') {
+                 messageElement = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${message}</div>`;
+            } else if (sender === 'typing') {
+                messageElement = `<div id="typing-indicator" class="flex justify-start"><div class="bg-white/10 rounded-lg py-3 px-4"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div>`;
+            }
+            chatLog.innerHTML += messageElement;
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        async function handleChatSubmit(event) {
+            event.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            if (GEMINI_API_KEY === "YOUR_API_KEY_HERE") {
+                appendMessage('ai', "Please add your Gemini API key to the script to enable the AI Concierge.");
+                return;
+            }
+
+            appendMessage('user', userMessage);
+            chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+            chatInput.value = '';
+            appendMessage('typing');
+
+            const inventoryForPrompt = allRecords.map(r => `${r.artist} - ${r.albumTitle} (Price: ${r.price})`).join('; ');
+            let systemInstructionText = translations[currentLang].chatbotSystemPrompt;
+            systemInstructionText += `\n- Here is the store's inventory: ${inventoryForPrompt}`;
+
+
+            const payload = {
+                contents: chatHistory,
+                systemInstruction: {
+                    parts: [{ text: systemInstructionText }]
+                }
+            };
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    let aiResponseText = result.candidates[0].content.parts[0].text;
+
+                    document.getElementById('typing-indicator')?.remove();
+                    
+                    const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
+                    const match = aiResponseText.match(jsonRegex);
+                    if (match) {
+                        aiResponseText = match[1];
+                    }
+
+                    try {
+                        const parsedJson = JSON.parse(aiResponseText);
+                        if (parsedJson.recommendations) {
+                            displayRecommendationsAsCards(parsedJson.recommendations);
+                        } else {
+                             appendMessage('ai', aiResponseText);
+                        }
+                    } catch (e) {
+                        appendMessage('ai', aiResponseText);
+                    }
+                    chatHistory.push({ role: 'model', parts: [{ text: aiResponseText }] });
+                } else {
+                     throw new Error("Invalid response structure from API");
+                }
+
+            } catch (error) {
+                console.error("Chatbot error:", error);
+                document.getElementById('typing-indicator')?.remove();
+                appendMessage('ai', translations[currentLang].chatbotError);
+            }
+        }
+
+        function displayRecommendationsAsCards(recommendations) {
+            const cardsHtml = recommendations.map(rec => {
+                const fullRecord = allRecords.find(r => r.artist === rec.artist && r.albumTitle === rec.albumTitle);
+                if (!fullRecord) return '';
+                
+                const colorHash = (str) => {
+                    let hash = 0;
+                    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                    let color = '#';
+                    for (let i = 0; i < 3; i++) {
+                        let value = (hash >> (i * 8)) & 0xFF;
+                        color += ('00' + value.toString(16)).substr(-2);
+                    }
+                    return color.substring(0, 7);
+                };
+                const bgColor = colorHash(rec.albumTitle);
+                const placeholderText = `${rec.artist.split(' ').map(w=>w[0]).join('')}`;
+
+                return `
+                    <div class="record-card bg-black/50 rounded-lg shadow-lg overflow-hidden flex flex-col border border-white/10"
+                         data-artist="${fullRecord.artist.replace(/"/g, '&quot;')}"
+                         data-album-title="${fullRecord.albumTitle.replace(/"/g, '&quot;')}"
+                         data-price="${fullRecord.price}"
+                         data-genre="${fullRecord.genre}"
+                         data-format="${fullRecord.format}"
+                         data-release-year="${fullRecord.releaseYear}"
+                         data-img-src="https://placehold.co/600x600/${bgColor.substring(1)}/FFFFFF?text=${placeholderText}&font=montserrat">
+                        <img src="https://placehold.co/400x400/${bgColor.substring(1)}/FFFFFF?text=${placeholderText}&font=montserrat" 
+                             alt="Album art for ${rec.albumTitle} by ${rec.artist}" 
+                             class="w-full h-auto object-cover aspect-square">
+                        <div class="p-4 flex flex-col flex-grow">
+                            <h3 class="font-bold text-white text-sm font-['Playfair_Display']">${rec.albumTitle}</h3>
+                            <p class="text-xs text-[var(--text-medium)] mb-2">${rec.artist}</p>
+                            <p class="text-xs text-[var(--text-light)] italic border-l-2 border-[var(--accent-gold)] pl-2 mb-3">"${rec.reason}"</p>
+                            <div class="mt-auto flex justify-between items-center">
+                                <p class="text-md font-semibold text-[var(--accent-gold)]">${fullRecord.price}</p>
+                                <span class="text-xs bg-white/10 text-[var(--text-light)] px-2 py-1 rounded-full">${fullRecord.format}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            appendMessage('ai-cards', cardsHtml);
+        }
+
+        // --- Record Modal Logic ---
+        const modal = document.getElementById('record-modal');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const aiDescriptionContainer = document.getElementById('ai-description-container');
+        
+        async function getAIDescription(artist, album) {
+            aiDescriptionContainer.innerHTML = `<div class="flex items-center space-x-2"><div class="spinner"></div><p>${translations[currentLang].aiLoadingText}</p></div>`;
+            
+            if (GEMINI_API_KEY === "YOUR_API_KEY_HERE") {
+                 aiDescriptionContainer.innerHTML = `<p class="text-amber-400">AI descriptions are disabled. Please add a valid API key.</p>`;
+                 return;
+            }
+
+            let prompt = translations[currentLang].aiDescriptionPrompt;
+            prompt = prompt.replace('{album}', album).replace('{artist}', artist);
+
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error('AI response failed');
+                const result = await response.json();
+                 if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const description = result.candidates[0].content.parts[0].text;
+                    aiDescriptionContainer.innerHTML = `<p>${description}</p>`;
+                } else {
+                    throw new Error("Invalid response structure from AI for description");
+                }
+            } catch (error) {
+                console.error("AI Description Error:", error);
+                aiDescriptionContainer.innerHTML = `<p class="text-amber-400">Could not generate a description at this time.</p>`;
+            }
+        }
+
+        function handleCardClick(event) {
+            const card = event.target.closest('.record-card');
+            if (!card) return;
+
+            const { artist, albumTitle, price, genre, format, imgSrc } = card.dataset;
+
+            document.getElementById('modal-img').src = imgSrc;
+            document.getElementById('modal-title').textContent = albumTitle;
+            document.getElementById('modal-artist').textContent = artist;
+            document.getElementById('modal-price').textContent = price;
+            document.getElementById('modal-genre').textContent = genre;
+            document.getElementById('modal-format').textContent = format;
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('is-open'), 10);
+
+            getAIDescription(artist, albumTitle);
+        }
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            setTimeout(() => modal.classList.add('hidden'), 400);
+        }
+
+        // --- Main execution on page load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('inventory.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    allRecords = parseCSV(csvText);
+                    
+                    populateGrid('featured-records-grid', allRecords, 10);
+                    
+                    const recentRecords = allRecords.filter(r => parseInt(r.releaseYear) > 2000);
+                    populateGrid('new-arrivals-grid', recentRecords, 5);
+                })
+                .catch(error => {
+                    console.error('There has been a problem with your fetch operation:', error);
+                });
+            
+            chatForm.addEventListener('submit', handleChatSubmit);
+
+            chatLog.addEventListener('click', handleCardClick);
+            document.getElementById('featured-records-grid').addEventListener('click', handleCardClick);
+            document.getElementById('new-arrivals-grid').addEventListener('click', handleCardClick);
+
+            modalCloseBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            setLanguage(currentLang);
+        });
+    </script>
+</body>
+</html>
