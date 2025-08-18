@@ -15,6 +15,7 @@
             --text-light: #e0e0e0;
             --text-medium: #a0a0a0;
             --accent-gold: #c9a47e;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         body {
@@ -32,23 +33,27 @@
             font-weight: 700;
         }
 
-        /* Animated Aurora/Smokey Background for Hero */
+        /* Animated Aurora Background */
         .hero-aurora {
             background: var(--bg-dark);
             position: relative;
             overflow: hidden;
         }
-        .hero-aurora::before {
+        .hero-aurora::before, .hero-aurora::after {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 150%;
-            height: 150%;
-            background: radial-gradient(circle at center, rgba(66, 43, 100, 0.3), rgba(108, 62, 133, 0.2), transparent 60%);
+            width: 150vmax;
+            height: 150vmax;
+            background: radial-gradient(circle at center, rgba(66, 43, 100, 0.3), rgba(108, 62, 133, 0.1), transparent 50%);
             transform-origin: center;
             animation: rotate-aurora 25s linear infinite;
             z-index: 0;
+        }
+        .hero-aurora::after {
+             background: radial-gradient(circle at center, rgba(126, 74, 133, 0.2), rgba(191, 128, 115, 0.1), transparent 60%);
+             animation-delay: -12.5s;
         }
         .hero-content {
             position: relative;
@@ -59,40 +64,123 @@
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        /* Scroll-triggered animations */
+        /* Smooth Scroll & Animations */
         .animate-on-scroll {
             opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transform: translateY(40px);
+            transition: opacity 1s var(--ease-out-expo), transform 1s var(--ease-out-expo);
         }
         .animate-on-scroll.is-visible {
             opacity: 1;
             transform: translateY(0);
         }
-        /* Staggered delay for child elements */
-        .animate-on-scroll.is-visible > * {
-            transition-delay: var(--delay, 0s);
+        .animate-on-scroll.is-visible .stagger-child {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fade-up 1s var(--ease-out-expo) forwards;
+            animation-delay: var(--delay, 0s);
+        }
+        @keyframes fade-up {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
+        /* Record Card Polish */
         .record-card {
-            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transition: transform 0.5s var(--ease-out-expo), box-shadow 0.5s var(--ease-out-expo);
             cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .record-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 0 50px -15px rgba(201, 164, 126, 0.3);
+        }
+
+        /* Revamped Chat UI */
+        #ai-concierge-box {
+             transition: all 0.5s var(--ease-out-expo);
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .chat-header .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            box-shadow: 0 0 8px #2ecc71;
         }
         #chat-log {
             height: 400px;
             overflow-y: auto;
+            padding: 1.5rem;
         }
-        /* Typing indicator */
+        .chat-message {
+            display: flex;
+            margin-bottom: 1.5rem;
+            animation: message-fade-in 0.6s var(--ease-out-expo) forwards;
+        }
+        @keyframes message-fade-in {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-message .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .chat-message .bubble {
+            max-width: 80%;
+            padding: 0.75rem 1.25rem;
+            border-radius: 1.25rem;
+            position: relative;
+        }
+        .chat-message.user {
+            justify-content: flex-end;
+        }
+        .chat-message.user .avatar {
+            background-color: var(--accent-gold);
+            color: var(--bg-dark);
+            margin-left: 0.75rem;
+        }
+        .chat-message.user .bubble {
+            background-color: var(--accent-gold);
+            color: var(--bg-dark);
+            border-bottom-right-radius: 0.5rem;
+        }
+        .chat-message.ai {
+            justify-content: flex-start;
+        }
+        .chat-message.ai .avatar {
+            background-color: rgba(255,255,255,0.1);
+            margin-right: 0.75rem;
+        }
+        .chat-message.ai .bubble {
+            background-color: var(--bg-medium);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-bottom-left-radius: 0.5rem;
+        }
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+        }
         .typing-indicator span {
             height: 8px;
             width: 8px;
+            margin: 0 2px;
             background-color: var(--text-medium);
             border-radius: 50%;
-            display: inline-block;
             animation: bounce 1.4s infinite ease-in-out both;
         }
         .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
@@ -101,7 +189,7 @@
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1.0); }
         }
-
+        
         /* Language Toggle Switch */
         .lang-switch {
             cursor: pointer;
@@ -117,7 +205,7 @@
             font-size: 12px;
             font-weight: 500;
             z-index: 1;
-            transition: color 0.3s ease;
+            transition: color 0.4s var(--ease-out-expo);
         }
         .lang-switch .active {
             color: #0a0a0a;
@@ -130,7 +218,7 @@
             height: calc(100% - 8px);
             background: var(--accent-gold);
             border-radius: 9999px;
-            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transition: transform 0.4s var(--ease-out-expo);
         }
         .lang-switch.ja .lang-switch-slider {
             transform: translateX(100%);
@@ -148,7 +236,7 @@
         }
         #modal-content {
             transform: scale(0.95);
-            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transition: transform 0.4s var(--ease-out-expo);
         }
         #record-modal.is-open #modal-content {
             transform: scale(1);
@@ -173,7 +261,7 @@
     <header class="bg-black/50 backdrop-blur-lg sticky top-0 z-50 border-b border-white/10">
         <div class="container mx-auto px-6 py-3 flex justify-between items-center">
             <a href="#">
-                <img src="unnamed.PNG" alt="Downtown Records Logo" class="h-12 w-auto">
+                <img src="https://placehold.co/200x50/0a0a0a/c9a47e?text=Downtown+Records&font=playfairdisplay" alt="Downtown Records Logo" class="h-12 w-auto">
             </a>
             <div class="flex items-center space-x-10">
                 <nav class="hidden md:flex space-x-10 text-sm font-medium tracking-wider">
@@ -207,17 +295,17 @@
         <!-- Hero Section -->
         <section class="hero-aurora text-white text-center py-32 md:py-52 px-6">
             <div class="hero-content container mx-auto animate-on-scroll">
-                <h1 data-key="heroTitle" class="text-5xl md:text-7xl font-black tracking-tight">Sounds of the Soul.</h1>
-                <p data-key="heroSubtitle" class="mt-6 text-lg md:text-xl max-w-2xl mx-auto text-[var(--text-medium)]" style="--delay: 0.1s;">From timeless classics to modern masterpieces, your next favorite record is waiting. Discover the unparalleled warmth of vinyl in the heart of Tokyo.</p>
-                <a href="#featured" data-key="heroButton" class="mt-10 inline-block bg-[var(--accent-gold)] text-black font-bold py-3 px-10 rounded-full text-lg hover:bg-white transition-colors" style="--delay: 0.2s;">Explore the Collection</a>
+                <h1 data-key="heroTitle" class="text-5xl md:text-7xl font-black tracking-tight stagger-child" style="--delay: 0.1s;">Sounds of the Soul.</h1>
+                <p data-key="heroSubtitle" class="mt-6 text-lg md:text-xl max-w-2xl mx-auto text-[var(--text-medium)] stagger-child" style="--delay: 0.2s;">From timeless classics to modern masterpieces, your next favorite record is waiting. Discover the unparalleled warmth of vinyl in the heart of Tokyo.</p>
+                <a href="#featured" data-key="heroButton" class="mt-10 inline-block bg-[var(--accent-gold)] text-black font-bold py-3 px-10 rounded-full text-lg hover:bg-white transition-transform hover:scale-105" style="--delay: 0.3s;">Explore the Collection</a>
             </div>
         </section>
 
         <!-- About Section -->
         <section id="about" class="py-24 bg-[var(--bg-medium)]">
             <div class="container mx-auto px-6 text-center animate-on-scroll">
-                <h2 data-key="aboutTitle" class="text-4xl font-bold text-white mb-6">More Than a Store. A Sanctuary.</h2>
-                <p data-key="aboutText" class="max-w-3xl mx-auto text-[var(--text-medium)] text-lg" style="--delay: 0.1s;">
+                <h2 data-key="aboutTitle" class="text-4xl font-bold text-white mb-6 stagger-child" style="--delay: 0.1s;">More Than a Store. A Sanctuary.</h2>
+                <p data-key="aboutText" class="max-w-3xl mx-auto text-[var(--text-medium)] text-lg stagger-child" style="--delay: 0.2s;">
                     Located in Koto City, Down town Record is a stylish, glassed-in haven for music lovers. We believe in the tangible magic of physical media. Relax on our couches with a cup of coffee and explore a living library of domestic and imported vinyl, meticulously curated for both seasoned collectors and new enthusiasts.
                 </p>
             </div>
@@ -239,19 +327,26 @@
         <section id="ai-concierge" class="py-24 bg-[var(--bg-medium)]">
             <div class="container mx-auto px-6 animate-on-scroll">
                 <div class="text-center">
-                    <h2 data-key="aiTitle" class="text-4xl font-bold text-white mb-4">GrooveBot Concierge</h2>
-                    <p data-key="aiSubtitle" class="max-w-3xl mx-auto text-[var(--text-medium)] mb-10" style="--delay: 0.1s;">
+                    <h2 data-key="aiTitle" class="text-4xl font-bold text-white mb-4 stagger-child" style="--delay: 0.1s;">GrooveBot Concierge</h2>
+                    <p data-key="aiSubtitle" class="max-w-3xl mx-auto text-[var(--text-medium)] mb-10 stagger-child" style="--delay: 0.2s;">
                         Our AI music expert is ready to assist. Ask for recommendations, find out about genres, or just talk music.
                     </p>
                 </div>
-                <div class="max-w-3xl mx-auto bg-black/50 rounded-lg shadow-2xl border border-white/10" style="--delay: 0.2s;">
-                    <div id="chat-log" class="p-6 space-y-4">
+                <div id="ai-concierge-box" class="max-w-3xl mx-auto bg-black/50 rounded-lg shadow-2xl border border-white/10 stagger-child" style="--delay: 0.3s;">
+                    <div class="chat-header">
+                        <div class="status-dot"></div>
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-white">GrooveBot</h3>
+                            <p class="text-xs text-gray-400">Online</p>
+                        </div>
+                    </div>
+                    <div id="chat-log">
                         <!-- Chat messages will appear here -->
                     </div>
                     <div class="p-4 bg-black/30 border-t border-white/10">
                         <form id="chat-form" class="flex items-center gap-4">
                             <input type="text" id="chat-input" data-key-placeholder="chatPlaceholder" class="w-full bg-white/5 text-white border-white/10 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[var(--accent-gold)] focus:border-[var(--accent-gold)] transition" placeholder="Ask GrooveBot anything..." autocomplete="off">
-                            <button type="submit" id="send-button" class="bg-[var(--accent-gold)] text-black p-3 rounded-lg hover:bg-white transition-colors flex-shrink-0">
+                            <button type="submit" id="send-button" class="bg-[var(--accent-gold)] text-black p-3 rounded-lg hover:bg-white transition-transform hover:scale-110 flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                                 </svg>
@@ -468,16 +563,17 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('is-visible');
+                    // Stagger children animation
+                    const children = entry.target.querySelectorAll('.stagger-child, .record-card');
+                    children.forEach((child, index) => {
+                        child.style.setProperty('--delay', `${index * 100}ms`);
+                    });
                 }
             });
         }, { threshold: 0.1 });
 
         document.querySelectorAll('.animate-on-scroll').forEach(element => {
             observer.observe(element);
-            const children = element.querySelectorAll('[style*="--delay"]');
-            children.forEach((child, index) => {
-                child.style.transitionDelay = `calc(var(--delay) + ${index * 100}ms)`;
-            });
         });
 
         // --- Core Application Logic ---
@@ -562,17 +658,33 @@
         let chatHistory = [];
 
         function appendMessage(sender, message) {
-            let messageElement;
+            let messageHTML = '';
             if (sender === 'user') {
-                messageElement = `<div class="flex justify-end"><div class="bg-[var(--accent-gold)] text-black rounded-lg py-2 px-4 max-w-sm">${message}</div></div>`;
+                messageHTML = `
+                    <div class="chat-message user">
+                        <div class="bubble">${message}</div>
+                        <div class="avatar font-bold">U</div>
+                    </div>`;
             } else if (sender === 'ai') {
-                messageElement = `<div class="flex justify-start"><div class="bg-white/10 text-white rounded-lg py-2 px-4 max-w-sm">${message}</div></div>`;
+                messageHTML = `
+                    <div class="chat-message ai">
+                        <div class="avatar">
+                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V4m0 16v-2M8 8l1.414-1.414M14.586 14.586L16 16m-2.828-8.414L12 5m2.828 8.414L16 13M5 12a7 7 0 1114 0 7 7 0 01-14 0z"></path></svg>
+                        </div>
+                        <div class="bubble">${message}</div>
+                    </div>`;
             } else if (sender === 'ai-cards') {
-                 messageElement = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${message}</div>`;
+                 messageHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${message}</div>`;
             } else if (sender === 'typing') {
-                messageElement = `<div id="typing-indicator" class="flex justify-start"><div class="bg-white/10 rounded-lg py-3 px-4"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div>`;
+                messageHTML = `
+                    <div id="typing-indicator" class="chat-message ai">
+                        <div class="avatar">
+                             <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V4m0 16v-2M8 8l1.414-1.414M14.586 14.586L16 16m-2.828-8.414L12 5m2.828 8.414L16 13M5 12a7 7 0 1114 0 7 7 0 01-14 0z"></path></svg>
+                        </div>
+                        <div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>
+                    </div>`;
             }
-            chatLog.innerHTML += messageElement;
+            chatLog.innerHTML += messageHTML;
             chatLog.scrollTop = chatLog.scrollHeight;
         }
 
@@ -800,5 +912,3 @@
     </script>
 </body>
 </html>
-
-
